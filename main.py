@@ -37,129 +37,14 @@ import time
 START_TIME: float = time.time() # start timing this script
 import datetime
 STARTED_DATE: datetime = datetime.datetime.now()
-VERSION: str = "v.3.7.3 --- 2024-06-24"
+VERSION: str = "v.3.8 --- 2024-08-09"
 import os
 os.environ["PYTHONUNBUFFERED"] = "1"
 print(f"Version: {VERSION}")
 print(f"Script started: {STARTED_DATE.replace(microsecond=0)}")
-
-#==| User Config |========================================================
-#=========================================================================
-DEBUG: bool = True
-'''
-If True, render the amount of time it took to render the last frame in the plot itself.
-Also outputs more info in the log. Personally, I'd leave this set to True.
-'''
-REFRESH_RATE: float = 3
-'''
-(in seconds)
-Don't set REFRESH_RATE too low - we don't want to waste too much CPU.
-Rendering is the most CPU intensive action in this script and we should let the respective threads
-finish while the workers in update_data() are sleeping to get a more accurate represenation of CPU usage.
-Testing has shown it takes roughly 100 - 500 milliseconds to render (on any x86_64 system, v.3.x of this script)
-the entire plot and send it to the display; if REFRESH_RATE is too low then
-we are limited to how fast the render threads can complete.
-    REFRESH_RATE should be >= 0.5
-'''
-PLOT_SIZE: float = 5
-'''
-(in minutes)
-How long to keep graph history.
-'''
-ARRAY_PATH: str = "/rootfs/mnt/user0"
-'''
-/rootfs/mnt/user0 is the main Unraid array inside this Docker.
-If you changed this, the directory should be /rootfs/[path_to_your_array].
-'''
-CPU_TEMP_SENSOR: str = "k10temp"
-'''
-Check the output of `psutil.sensors_temperatures()`, `sensors` on your system,
-or look at the output of this script. Then, update with the correct sensor.
-'''
-NETWORK_INTERFACE: str = "bond0"
-'''
-This is the network interface you want to monitor in Unraid.
-Not setting this correctly will display incorrect values since
-Unraid has multiple interfaces that show duplicate data.
-Additionally, if this is set correctly, this script can determine if the interface ever goes down.
-Use the interface names listed in the Unraid GUI or from the output of this script.
-'''
-SPLASH_SCREEN: str = "/app/background.bmp"
-''' Our splash screen when loading or exiting this script '''
-IMAGE_ROTATION: int = 180
-''' Rotate the screen if needed. Valid values are 0, 90, 180, 270 '''
-PLOT_CONFIG: tuple = (
-    #--------------------
-    # PLOT 1 (upper plot)
-    #--------------------
-    {
-    'title' : 'C P U',
-    'ylim' : (0, 100),
-    'line_config' : (
-        {'width': 1, 'alpha': 0.5, 'style': '-'}, # CPU
-        {'width': 1, 'alpha': 0.5, 'style': '--'}  # Temps
-        )
-    },
-    #--------------------
-    # PLOT 2 (CPU core heatmap)
-    #--------------------
-    {
-    'title' : 'C o r e   H e a t m a p',
-    #'ylim' : (0, 100),
-    'line_config' : (
-        {}, # need this just so we can plot
-        )
-    },
-    #--------------------
-    # PLOT 3 (middle plot)
-    #--------------------
-    {
-    'title' : 'D i s k s',
-    # 'ylim' : (0, 1000),
-    'line_config' : (
-        {'width': 1, 'alpha': 0.5, 'style': '-'}, # read
-        {'width': 1, 'alpha': 0.5, 'style': '--'}, # write
-        )
-    },
-    #--------------------
-    # PLOT 4 (bottom plot)
-    #--------------------
-    {
-    'title' : 'N e t w o r k',
-    #'ylim' : (0, 1000),
-    'line_config' : (
-        {'width': 1, 'alpha': 0.5, 'style': '-'}, # received
-        {'width': 1, 'alpha': 0.5, 'style': '--'}, # sent
-        )
-    },
-    #--------------------
-    # PLOT 5 (Resource usage)
-    #--------------------
-    {
-    #'title' : 'Resources',
-    'line_config' : (
-        {} # a bar graph
-    )
-    }
-)
-''' 
-Valid plot properties are:
-    - title = name your subplot
-    - ylim (min, max) = y-axis limits
-        (NB: if ylim is not set, matplotlib will automatically scale for us)
-- for lines:
-    - 'color': '#hexadecimal'
-    - 'width': integer
-    - 'style': (refer to matplotlib linestyle documentation)
-    - 'alpha': 0-1
-'''
-
-BARPLOT_COLORS: list = ['#375e1f','#4a2a7a']
-''' Colors for our bar chart, in hexadecimal as a string. '''
-
-#==| End User Config |========================================================
-#=============================================================================
-''' Continue our setup '''
+from pathlib import Path
+CURRENT_DIR = Path(__file__).resolve().parent
+# Load built-in modules
 import signal
 import sys
 import gc
@@ -168,142 +53,62 @@ import socket
 from collections import deque
 import concurrent.futures as CF
 
-'''
-Changelog:
-- v.3.7 (2024-05-31)
-    - v.3.7.3 (2024-06-24)
-        - NEW: Plot size now determined by desired time length (eg: 2 minutes) and not exact sample amount (eg: 120)
-            - Enforce plot size limits
-        - Daily event timer now adjusts based on average loop speed and should get more accurate over time
-        - Small debug text tweaks
-    - v.3.7.2 (2024-06-15)
-        - minor text output tweaks
-        - NEW: get stats/info of the current process
-        - do something more useful with our daily task with stats instead
-        - init.sh will skip dependency check if it hasn't been over a month (saves CPU on startup)
-        - refactored CPU temp sensor check routine (less spaghetti; the solution was revealed to me while on the toilet)
-        - more settings checks and small refactoring
-    - v.3.7.1 (2024-06-03)
-        - Code is mature and has diverged enough (v.3.7) that all active VSCode references are now removed (no more VSCode debug)
-    - This script can now run on other systems that aren't UNRAID, sorta. All thanks to the following init.sh changes:
-        - NEW: "portable" version of init.sh that sets up a virtual python environment if run outside of Docker    
-        - no more hard-coded locations; init.sh will execute main.py if it's in the same directory
-        - environment variables now baked into init.d
-        - init.sh now checks for internet when doing setup or package checks and handles no connections accordingly
-        - init.sh has proper exit codes now (Docker used to report an exit code 143 when asked to shutdown)
-        - NEW: time how long it takes to set things up before actually running python
-        - some type hint regressions to run on older python versions
-    - Significantly revised and refactored thread timeouts (again)
-        - NEW: option to display full render time like how it used to be in v.3.5
-        - plot_profiler() will now monitor both threads and allow us to set time outs respectively
-        - NEW: more granular stats
-        - complicated things with numpy arrays and lists
-        - NEW: if threads time out enough times, bumps up baseline values until they don't (up to 4 instances)
-        - worker thread time outs no longer kill this script (finally)
-        - tighter post-profiled timeouts and clarifed output messages
-        - reduced loop pause down to just refresh rate (was refresh rate * 2)
-    - NEW: automatically set minimum refresh rate if the system is really slow (determined by setup time)
-    - NEW: settings checker will now list available sensors and NIC interfaces if it fails to find any
-    - more resiliency against broken python environments and revised error outputs
-    - Docker no longer needs environment variables as they're handled both in here and in the init.sh script
-    - additional CPU temp fallbacks
-    - move external dependency imports to later in the script for better debug in different environments
-    - more accurate physical memory usage calculation
-    - bigger default font size and legibility improvements for text overlays on plots
-- v.3.6 (2024-05-05)
-    - v.3.6.3 (2024-05-26)
-        - Autoscaling now sets y minimum to 0
-        - NEW: Network plot checks NIC status and will display on screen if down
-        - NEW: Parse hostname and local IP and display it on screen
-        - on-screen debug text tweaks
-        - date stamps when exiting
-        - NEW: CPU temp fallback and more user config error handling
-        - small code cleanups
-    - v.3.6.2 (2024-05-14)
-        - invoke garbage collection tweaks (probably not necessary)
-        - remove redundant axis labelling routine and re-utilize the PLOT_CONFIG setting (includes validation as well)
-        - slight change to plot style defaults to match most common process managers (eg. Windows Task Manager)
-        - small tweaks to plot text and setting the network plot receive as line 0 (was unchanged from v.1.x)
-        - NEW: render frame number into plot if debug enabled
-        - cleaner time outputs
-    - v.3.6.1 (2024-05-06)
-        - small tweaks and improvements (envvars and settings parsing, init.sh tweaks again)
-    - display renderer now gets sent to a separate thread
-        - add profiling switch to measure either plot generation or display rendering
-        - thread timeouts now will consider either the plot or render thread
-        - add associated logic changes
-    - NEW: init.sh now has a profiling option that will install/summon scalene to profile this script
-    - Significant code reorganization and additional logic changes for environment/user settings (extends changes in v.3.5)
-    - Set minimum refresh rate to 0.5s (the whole plot update + display render takes ~140ms on a Ryzen 7 5700G at idle)
-    - NEW: dropped frame count tracking if render threads timeout
-    - verbose output now has a "•" preceeding the message for clarity
-    - add barplot colors as part of user config
-- v.3.5 (2024-04-30)
-    - v.3.5.1 (2024-05-03)
-        - NEW: Render thread timeouts don't kill this script but will just pause the loop for a bit
-        - Enhance debug outputs and use stderr for some
-        - More init.sh logging tweaks (no more progress bar)
-        - Attempt some small processing optimizations
-    - NEW: Add network interface setting due to Unraid having interfaces with duplicate data and showing incorrect info
-    - Better byte size parsing and consistent use of IEC binary multipliers
-    - More robust and elegant handling of misconfigured settings in user config
-    - slight init.sh tweaks
-    - Avoid edge case of counters overflowing with long-lived systems (via psutil flags)
-- v.3.4 (2024-03-12)
-    - v.3.4.1 (2024-03-14)
-        - NEW: check and parse Unraid version
-        - fix weird Ftdi output during check
-        - fix error handler catching SIGTERM
-        - fix edge case where disk activity can be negative
-        - add some type hints
-        - NEW: rudimentary progress bar in init.sh file
-    - Updated Docker config to no longer require being privileged
-        - Docker image will now be able to automatically find the FT232H board
-    - Overhaul dependency check output in the init.sh script
-        - only logs errors now (less logging junk)
-        - NEW: now checks if this is a first run
-    - NEW: nice logo in logs
-    - better adherence to the Google Python Style Guide
-- v.3.3 (2024-03-11)
-    - v.3.3.2 (2024-03-12)
-        - updated to use modern matplotlib method for image rendering
-        - NEW: logic added in case there's no splash screen image found
-    - v.3.3.1
-        - NEW: thread timeout for rendering now considers CPU load due to low process priority (fancy?)
-    - NEW: added profiling logic to adjust plot rendering timeout based on hardware performance
-        - just in case there's a memory leak but that shouldn't happen, right?
-    - lowered process priority to near-minimum via Docker (remember, this is just a system resource monitor)
-    - moved user-config section to the beginning of script
-- v.3.2 (2024-03-10)
-    - FIXED: Memory leak due to heatmap and bar graph introduced in v.1.x
-    - some more code refactoring
-- v.3.1 (2024-03-09)
-    - optimizations for string manipulation, improving per-loop times (extra ~10%)
-    - more accurate timing info and new sample stat when SIGTERM'd
-    - revised debug output on rendered image
-    - NEW: verbose changelog
-- v.3.0 (2024-03-09)
-    - NEW: switch to using ThreadPoolExecutor for better performance (almost 2x speed up)
-    - improved docstrings and code readability
-    - NEW: better exception handling, settings validation, and timeout checks
-    - refactoring to make it easier to switch between debugging in VSCode in Windows and actual hardware (this was for me)
-- v.2.1 (2024-03-07)
-    - NEW: add debug flags and print stats to screen and log
-- v.2.0 (2024-03-06)
-    - finalize layout
-    - NEW: figure out multithreading and refactor around this
-- v.1.x (2024-03-02)
-    - learn how to actually code in Python
-    - figure out how to use matplotlib correctly
-    - determine what resources to monitor
-    - initial layout changes for plot
-    - how do I VSCode
-- v.0.x (2024-02)
-    - get this script to actually run in a Docker environment
-    - modify the script this is based on for my use
-    - NEW: graceful exit for when Docker exits (SIGTERM handler here and in init.sh)
-    - NEW: splash screen
-'''
+#==| Default Config |=====================================================
+#=========================================================================
+DEBUG: bool = True
+REFRESH_RATE: float = 3
+PLOT_SIZE: float = 5
+ARRAY_PATH: str = "/rootfs/mnt/user0"
+CPU_TEMP_SENSOR: str = "k10temp"
+NETWORK_INTERFACE: str = "bond0"
+SPLASH_SCREEN: str = "/app/background.bmp"
+IMAGE_ROTATION: int = 180
+PLOT_CONFIG: tuple = (
+    # --- PLOT 1
+    {
+    'title' : 'C P U',
+    'ylim' : (0, 100),
+    'line_config' : (
+        {'width': 1, 'alpha': 0.5, 'style': '-'}, # CPU
+        {'width': 1, 'alpha': 0.5, 'style': '--'}  # Temps
+        )
+    },
+    # --- PLOT 2 (CPU core heatmap)
+    {
+    'title' : 'C o r e   H e a t m a p',
+    #'ylim' : (0, 100),
+    'line_config' : (
+        {}, # need this just so we can plot
+        )
+    },
+    # --- PLOT 3 (middle plot)
+    {
+    'title' : 'D i s k s',
+    # 'ylim' : (0, 1000),
+    'line_config' : (
+        {'width': 1, 'alpha': 0.5, 'style': '-'}, # read
+        {'width': 1, 'alpha': 0.5, 'style': '--'}, # write
+        )
+    },
+    # --- PLOT 4 (bottom plot)
+    {
+    'title' : 'N e t w o r k',
+    #'ylim' : (0, 1000),
+    'line_config' : (
+        {'width': 1, 'alpha': 0.5, 'style': '-'}, # received
+        {'width': 1, 'alpha': 0.5, 'style': '--'}, # sent
+        )
+    },
+    # --- PLOT 5 (Resource usage)
+    {
+    #'title' : 'Resources',
+    'line_config' : (
+        {} # a bar graph
+    )
+    }
+)
+BARPLOT_COLORS: list = ['#375e1f','#4a2a7a']
+
 #==| Program setup |==========================================================
 #=============================================================================
 
@@ -534,13 +339,6 @@ cpu_temp_available = True
 network_interface_set = True
 array_valid = True
 
-# Reduce traceback fluff and automatic garbage collections
-if DEBUG == False:
-    sys.tracebacklimit = 0
-else:
-    sys.tracebacklimit = 1
-gc.set_threshold(10000, 50, 20)
-
 #==| Environment setup |======================================================
 #=============================================================================
 
@@ -551,22 +349,67 @@ print(f"Hey there, {UNRAID_HOSTNAME} @ {UNRAID_IP}!")
 
 # Check Unraid version
 UNRAID_VER_FILE: str = '/rootfs/etc/unraid-version'
-if os.path.exists(UNRAID_VER_FILE):
+try:
     with open(UNRAID_VER_FILE) as unraid_str:
         # String format: 'version="x.x.x"\n'
         input_list = unraid_str.readlines()
     UNRAID_VERSION: str = str(input_list[0]).split('"')[1]
     print(f"We're running in Unraid version {UNRAID_VERSION}")
     del input_list, UNRAID_VER_FILE
-else:
+except:
     print_stderr("Warning: are we running in UNRAID?")
     UNRAID_VERSION: str = "Unknown"
+
+# Load our settings file
+if str(CURRENT_DIR) == "/":
+    SETTINGS_FILE = f"{CURRENT_DIR}settings.yaml"
+else:
+    SETTINGS_FILE = f"{CURRENT_DIR}/settings.yaml"
+try:
+    import yaml
+    with open(SETTINGS_FILE, mode="rb") as file:
+        settings_loaded = yaml.safe_load(file)
+        print(f"Loaded settings file \'{SETTINGS_FILE}\'")
+    try:
+        DEBUG: bool = settings_loaded['DEBUG']
+        REFRESH_RATE: float = settings_loaded['REFRESH_RATE']
+        PLOT_SIZE: float = settings_loaded['PLOT_SIZE']
+        ARRAY_PATH: str = settings_loaded['ARRAY_PATH']
+        CPU_TEMP_SENSOR: str = settings_loaded['CPU_TEMP_SENSOR']
+        NETWORK_INTERFACE: str = settings_loaded['NETWORK_INTERFACE']
+        SPLASH_SCREEN: str = settings_loaded['SPLASH_SCREEN']
+        IMAGE_ROTATION: int = settings_loaded['IMAGE_ROTATION']
+        BARPLOT_COLORS: list = settings_loaded['BARPLOT_COLORS']
+        PLOT_CONFIG: tuple = settings_loaded['PLOT_CONFIG']
+        print("Successfully parsed settings file.")
+    except:
+        print_stderr("Warning: Unable to parse settings file completely.\n\
+         To prevent an inconsistent state, the program will now exit.\n\
+         Please check the settings file for any typos.")
+        time.sleep(5)
+        raise ValueError("Settings file has invalid or missing entries.")
+    finally:
+        del settings_loaded
+except ImportError:
+    print_stderr("Warning: Required Python module \'yaml\' could not be loaded and settings file cannot be used.\n\
+         Please check your Python environment. Using default settings.")
+except:
+    print_stderr(f"Warning: Unable to load settings file \'{SETTINGS_FILE}\'\n\
+         Using default settings.")
 
 if DEBUG == True:
     print("• Verbose setting enabled. Verbose data will be prefixed with • in the logs")
     print("  and additional data rendered on-screen.")
     print(f"• We're using: {sys.executable}")
+    print(f"• We're running in: {CURRENT_DIR}")
     #print_stderr("• ℹ️ Testing a stderr message on this line.")
+  
+# Reduce traceback fluff and automatic garbage collections
+if DEBUG == False:
+    sys.tracebacklimit = 0
+else:
+    sys.tracebacklimit = 1
+gc.set_threshold(10000, 50, 20)
 
 # Load in external dependencies after printing where we're running python
 try:
@@ -1184,7 +1027,6 @@ Plot range: {round(REFRESH_RATE * (HIST_SIZE - 1),1)}s ({round(REFRESH_RATE * (H
 {round(baseline_timeout[0] * 1000, 4)}ms, {round(baseline_timeout[1] * 1000, 4)}ms (was {timeout_wait[0]}s)")
             else: 
                 pass
-                # print(f"DEBUG - Updated timeout: {current_timeout}s") # for debugging the profiler
                 
         samples +=1
         
@@ -1197,7 +1039,7 @@ Plot range: {round(REFRESH_RATE * (HIST_SIZE - 1),1)}s ({round(REFRESH_RATE * (H
             current_memory_usage = psutil.Process().memory_info().rss
             this_process_cpu = this_process.cpu_percent(interval=None)
             print(f"\nℹ️ Periodic stat update @ {samples} samples \
-({timedelta_clean(time.time()-START_TIME)}):\n└ {dropped_frames} dropped sample(s) | \
+({timedelta_clean(time.time()-START_TIME)}):\n├ {dropped_frames} dropped sample(s) | \
 {sample_actual_time}ms avg time/sample\
 \n└ Avg CPU: {this_process_cpu}% ({round(this_process_cpu / CORE_COUNT, 3)}% total) | \
 Current memory use: {bytes2human(current_memory_usage)}")

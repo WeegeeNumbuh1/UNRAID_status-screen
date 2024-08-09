@@ -1,4 +1,12 @@
-# UNRAID Status Screen
+<!-- Title -->
+<div align="center">
+    <a href="https://github.com/WeegeeNumbuh1/UNRAID-Status-Screen">
+    <img src="Reference Images/Logo.png" alt="Logo" width="240" height="240">
+    </a>
+    <h1 align="center">UNRAID Status Screen</h1>
+</div>
+<!-- end title section -->
+
 An UNRAID system monitoring screen script, powered by Python, [matplotlib](https://matplotlib.org/), and [psutil](https://github.com/giampaolo/psutil).
 Designed to run completely in Docker, but can also be run elsewhere.
 Probably using matplotlib in ways it wasn't designed for, lmao.
@@ -12,6 +20,9 @@ This project additionally is the author's first foray into Python programming; p
 With that in mind, there is potentially unrealized optimizations that can be done, but alas, as this project stands, it should work *good enough*.
 
 The project has undergone significant changes that have not been tracked via `git` but the end-goal has been making the main script highly fault-tolerant and passably performant under the constraints of a high-level language interacting with low-level hardware.
+
+### What it looks like:
+*(image goes here)*
 
 ## Features
 - Fully Python based
@@ -36,7 +47,7 @@ The project has undergone significant changes that have not been tracked via `gi
 - Looks neat imho 👍
 
 ## Hardware Setup and Wiring
-*(todo)*
+*(to-do)*
 
 ## Setup
 ### Prerequisites
@@ -46,7 +57,9 @@ The project has undergone significant changes that have not been tracked via `gi
 
 ### Running on UNRAID
 The Docker configuration file needed is in the `docker-config` folder.
-*As for how to use this, idk. (instructions to come at a later time)*
+<br />
+*As for how to use this, idk (instructions to come at a later time).*
+<br />
 At a minimum on the software side, the `init.sh`, `main.py`, and `settings.yaml` files should be in the same working directory.
 Assuming the Docker is configured correctly to execute the `init.sh` script, `init.sh` will handle the rest.
 
@@ -60,7 +73,8 @@ If running outside of UNRAID (eg. a Raspberry Pi), use the `init-portable.sh` fi
 
 ## Version History
 **Always refer to the `Changelog.txt` file for detailed changes.**
-- 3.8 (2024-08)
+- 3.8 (2024-08-09)
+- 3.8 (2024-08-09)
     - First published to Github
     - Settings are no longer hardcoded into script and are now moved to an external settings file
     - Changelog now lives in its own file rather than internal to the script
@@ -74,7 +88,6 @@ If running outside of UNRAID (eg. a Raspberry Pi), use the `init-portable.sh` fi
     - [ ] Use multiple cores? Use a GPU library? Who knows... *(might never happen)*
 
 ## Acknowledgements
-Thanks to the fellow tech nerds in [Otocord](https://discord.gg/haha98) for all the suggestions over the evolution of this project (mainly watching me go crazy adding in feature creep).
-<div align="left">
 <a href="https://discord.gg/haha98"><img src="https://cdn.discordapp.com/emojis/765011373590970418.webp?size=96&quality=lossless" alt="soootrue" width="40" height="40"></a>
 </div>
+^ Thanks to the fellow tech nerds in here for all the suggestions over the evolution of this project (mainly watching me go crazy adding in feature creep)

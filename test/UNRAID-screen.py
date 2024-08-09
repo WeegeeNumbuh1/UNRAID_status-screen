@@ -22,9 +22,10 @@ import matplotx
 import psutil
 import threading
 import concurrent.futures as CF
+from pathlib import Path
 import yaml
 
-CURRENT_DIR = os.getcwd()
+CURRENT_DIR = Path(__file__).resolve().parent
 VERSION = "v.3.8 VSCode --- 2024-08"
 '''
 Changelog (VSCode Edition):
@@ -417,7 +418,10 @@ except:
     UNRAID_VERSION: str = "Unknown"
 
 # Load our settings file
-settings_file = f"{CURRENT_DIR}/settings.yaml"
+if {CURRENT_DIR} == "/":
+    settings_file = f"{CURRENT_DIR}settings.yaml"
+else:
+    settings_file = f"{CURRENT_DIR}/settings.yaml"
 try:
     with open(settings_file, mode="rb") as file:
         settings_loaded = yaml.safe_load(file)
@@ -962,7 +966,7 @@ Plot range: {round(REFRESH_RATE * (HIST_SIZE - 1),1)}s ({round(REFRESH_RATE * (H
             this_process_cpu = this_process.cpu_percent(interval=None)
             if DEBUG == True:
                 print(f"\nℹ️ Periodic stat update @ {samples} samples \
-({timedelta_clean(time.time()-START_TIME)}):\n└ {error_count} dropped sample(s) | \
+({timedelta_clean(time.time()-START_TIME)}):\n├ {error_count} dropped sample(s) | \
 {sample_actual_time}ms avg time/sample\
 \n└ Avg CPU: {this_process_cpu}% ({round(this_process_cpu / CORE_COUNT, 3)}% total) | \
 Current memory use: {bytes2human(current_memory_usage)}")

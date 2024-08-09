@@ -1,10 +1,11 @@
 # Configuration file for UNRAID STATUS SCREEN
 # Used for versions 3.8 or newer
 # by: WeegeeNumbuh1
+# IMPORTANT: Don't remove or rename root-level keys!
 ---
 DEBUG: true
 # If True, render the amount of time it took to render the last frame in the plot itself.
-# Also outputs more info in the log. Personally, I'd leave this set to True.
+# Also outputs more info in the log. Personally, I'd leave this set to true.
 
 REFRESH_RATE: 3
 # (in seconds)
@@ -26,17 +27,18 @@ ARRAY_PATH: /rootfs/mnt/user0
 
 CPU_TEMP_SENSOR: k10temp
 # Check the output of `psutil.sensors_temperatures()`, `sensors` on your system,
-# or look at the output of this script. Then, update with the correct sensor.
+# or look at the log output of the script. Then, update with the correct sensor.
 
 NETWORK_INTERFACE: bond0
 # This is the network interface you want to monitor in Unraid.
 # Not setting this correctly will display incorrect values since
 # Unraid has multiple interfaces that show duplicate data.
 # Additionally, if this is set correctly, this script can determine if the interface ever goes down.
-# Use the interface names listed in the Unraid GUI or from the output of this script.
+# Use the interface names listed in the Unraid Web UI or from the output of the script.
 
 SPLASH_SCREEN: /app/background.bmp
-# Our splash screen when loading or exiting this script
+# Our splash screen when loading or exiting this script.
+# Optional. However, the script will complain if there's no splash screen.
 
 IMAGE_ROTATION: 180
 # Rotate the screen if needed. Valid values are 0, 90, 180, 270
@@ -99,3 +101,4 @@ PLOT_CONFIG:
 #   - 'width': integer
 #   - 'style': (refer to matplotlib linestyle documentation)
 #   - 'alpha': 0-1
+# IMPORTANT: DON'T CHANGE THE AMOUNT OF PLOTS (it will break things)

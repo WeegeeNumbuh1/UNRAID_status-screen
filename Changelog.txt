@@ -1,4 +1,10 @@
 Changelog:
+- v.3.8 (2024-08-09)
+    - User configuration is no longer hardcoded into this script and is now an external file (yaml)
+        - Relevant docstrings have also been removed due to this change
+        - Additional logic changes to main script and init.sh to handle this change
+    - Changelog now exists in a separate file (this one), no longer clogging up the script
+    - Project is now tracked with Git and is also now on Github
 - v.3.7 (2024-05-31)
     - v.3.7.3 (2024-06-24)
         - NEW: Plot size now determined by desired time length (eg: 2 minutes) and not exact sample amount (eg: 120)

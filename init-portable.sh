@@ -1,6 +1,7 @@
 #!/bin/bash
 # Initialization/bootstrap script for our Python Docker.
-# For changelog, check the 'main.py' file. 
+# For changelog, check the 'changelog.txt' file.
+# Version = v.3.8
 # by: WeegeeNumbuh1
 STARTTIME=$(date '+%s')
 BASEDIR=$(dirname $0)
@@ -26,7 +27,7 @@ terminate() {
 	exit 0
 	}
 	
-echo -e "\n${ORANGE}>>> Portable script. This will set up the python file to run in a virtual environment."
+echo -e "\n${ORANGE}>>> This is the portable script. This will set up the python file to run in a virtual environment."
 echo -e "${GREEN}>>> Checking dependencies, let's begin.${NC}"
 if [ `id -u` -ne 0 ]; then
     echo "Please run as root."
@@ -162,8 +163,8 @@ else
 #	echo -e "${ORANGE}>>> Profiling enabled. Profile output will be generated every 60 seconds."
 #	python3 -m scalene --cli --reduced-profile --profile-interval 60 /app/main.py & child_pid=$!
 	echo -e "${ORANGE}>>> ⚠️ Profiling enabled. You MUST run the below command in a new console window!"
-	echo "/usr/local/bin/python -m scalene --cli --reduced-profile --profile-interval 60 /app/main.py"
-	echo "Note: this can only be run once. The Docker must be restarted to profile again."
+	echo -e "python3 -m scalene --cli --reduced-profile --profile-interval 60 ${BASEDIR}/main.py \n"
+	echo "Note: this can only be run once. This terminal must be restarted to profile again."
 	echo "--- To disable profiling on the next run, rename or delete the \"profile\" file."
 	python3 -c "exec(\"import time\nwhile True: time.sleep(1)\")" & child_pid=$! # to keep the docker alive
 	wait "$child_pid"
