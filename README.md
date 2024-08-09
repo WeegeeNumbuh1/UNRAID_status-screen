@@ -1,6 +1,6 @@
 <!-- Title -->
 <div align="center">
-    <a href="https://github.com/WeegeeNumbuh1/UNRAID-Status-Screen">
+    <a href="https://github.com/WeegeeNumbuh1/UNRAID_status-screen">
     <img src="Reference Images/Logo.png" alt="Logo" width="240" height="240">
     </a>
     <h1 align="center">UNRAID Status Screen</h1>
