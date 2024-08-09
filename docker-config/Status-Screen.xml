@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>status-screen</Name>
+  <Repository>python:3</Repository>
+  <Registry>https://hub.docker.com/_/python</Registry>
+  <Network>host</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support/>
+  <Project/>
+  <Overview>Runs a small status screen (ILI9341) powered by a FT232H board.&#xD;
+Requires an init.sh and main.py file in the Script Source directory.&#xD;
+Network type should be set to 'host' for network statistics.</Overview>
+  <Category/>
+  <WebUI/>
+  <TemplateURL/>
+  <Icon>https://d1q6f0aelx0por.cloudfront.net/product-logos/library-python-logo.png</Icon>
+  <ExtraParams>--init --memory=256m --cpu-shares=256 --device-cgroup-rule='c 189:* rmw'</ExtraParams>
+  <PostArgs>nice -n 10 /bin/bash /app/init.sh</PostArgs>
+  <CPUset/>
+  <DateInstalled>1716972122</DateInstalled>
+  <DonateText/>
+  <DonateLink/>
+  <Requires/>
+  <Config Name="Script Source" Target="/app" Default="/mnt/user/appdata/python/status-screen/" Mode="ro" Description="Where the script files are located in UNRAID" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/python/status-screen/</Config>
+  <Config Name="/dev" Target="/dev" Default="/dev" Mode="rw" Description="Pass current devices connected to this UNRAID system to this Docker. Needed to find the FT232H board" Type="Path" Display="advanced" Required="true" Mask="false">/dev</Config>
+  <Config Name="/udev" Target="/run/udev" Default="/run/udev" Mode="ro" Description="Passes device IDs" Type="Path" Display="advanced" Required="true" Mask="false">/run/udev</Config>
+  <Config Name="Root File System" Target="/rootfs" Default="/" Mode="ro" Description="Needed to profile system. [R/O]" Type="Path" Display="advanced" Required="true" Mask="false">/</Config>
+</Container>

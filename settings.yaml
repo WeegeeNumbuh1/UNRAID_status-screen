@@ -1,0 +1,101 @@
+# Configuration file for UNRAID STATUS SCREEN
+# Used for versions 3.8 or newer
+# by: WeegeeNumbuh1
+---
+DEBUG: true
+# If True, render the amount of time it took to render the last frame in the plot itself.
+# Also outputs more info in the log. Personally, I'd leave this set to True.
+
+REFRESH_RATE: 3
+# (in seconds)
+# Don't set REFRESH_RATE too low - we don't want to waste too much CPU.
+# Rendering is the most CPU intensive action in this script and we should let the respective threads
+# finish while the workers in update_data() are sleeping to get a more accurate represenation of CPU usage.
+# Testing has shown it takes roughly 100 - 500 milliseconds to render (on any x86_64 system, v.3.x of this script)
+# the entire plot and send it to the display; if REFRESH_RATE is too low then
+# we are limited to how fast the render threads can complete.
+#   REFRESH_RATE should be >= 0.5
+    
+PLOT_SIZE: 5
+# (in minutes)
+# How long to keep graph history.
+
+ARRAY_PATH: /rootfs/mnt/user0
+# /rootfs/mnt/user0 is the main Unraid array inside this Docker.
+# If you changed this, the directory should be /rootfs/[path_to_your_array].
+
+CPU_TEMP_SENSOR: k10temp
+# Check the output of `psutil.sensors_temperatures()`, `sensors` on your system,
+# or look at the output of this script. Then, update with the correct sensor.
+
+NETWORK_INTERFACE: bond0
+# This is the network interface you want to monitor in Unraid.
+# Not setting this correctly will display incorrect values since
+# Unraid has multiple interfaces that show duplicate data.
+# Additionally, if this is set correctly, this script can determine if the interface ever goes down.
+# Use the interface names listed in the Unraid GUI or from the output of this script.
+
+SPLASH_SCREEN: /app/background.bmp
+# Our splash screen when loading or exiting this script
+
+IMAGE_ROTATION: 180
+# Rotate the screen if needed. Valid values are 0, 90, 180, 270
+
+BARPLOT_COLORS:
+    - '#375e1f'
+    - '#4a2a7a'
+# Colors for our bar chart (plot 5), in hexadecimal as a string.
+
+PLOT_CONFIG:
+    # Plot 1 (upper plot)
+    - line_config:
+        # CPU
+      - alpha: 0.5
+        style: '-'
+        width: 1
+        # Temps
+      - alpha: 0.5
+        style: '--'
+        width: 1
+      title: C P U
+      ylim:
+      - 0
+      - 100
+    # Plot 2 (CPU core heatmap)
+    - line_config:
+      - {} # needed to plot
+      title: C o r e   H e a t m a p
+    # Plot 3 (Middle plot)
+    - line_config:
+        # read
+      - alpha: 0.5
+        style: '-'
+        width: 1
+        # write
+      - alpha: 0.5
+        style: '--'
+        width: 1
+      title: D i s k s
+    # Plot 4 (bottom plot)
+    - line_config:
+        # received
+      - alpha: 0.5
+        style: '-'
+        width: 1
+        # sent
+      - alpha: 0.5
+        style: '--'
+        width: 1
+      title: N e t w o r k
+    # Plot 5
+    - line_config: {} # needed to plot
+    
+# Valid plot properties are:
+#   - title = name your subplot
+#   - ylim (min, max) = y-axis limits
+#       (NB: if ylim is not set, matplotlib will automatically scale for us)
+# - for lines:
+#   - 'color': '#hexadecimal'
+#   - 'width': integer
+#   - 'style': (refer to matplotlib linestyle documentation)
+#   - 'alpha': 0-1
