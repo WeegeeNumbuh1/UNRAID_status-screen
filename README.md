@@ -74,7 +74,6 @@ If running outside of UNRAID (eg. a Raspberry Pi), use the `init-portable.sh` fi
 ## Version History
 **Always refer to the `Changelog.txt` file for detailed changes.**
 - 3.8 (2024-08-09)
-- 3.8 (2024-08-09)
     - First published to Github
     - Settings are no longer hardcoded into script and are now moved to an external settings file
     - Changelog now lives in its own file rather than internal to the script
@@ -88,6 +87,6 @@ If running outside of UNRAID (eg. a Raspberry Pi), use the `init-portable.sh` fi
     - [ ] Use multiple cores? Use a GPU library? Who knows... *(might never happen)*
 
 ## Acknowledgements
-<a href="https://discord.gg/haha98"><img src="https://cdn.discordapp.com/emojis/765011373590970418.webp?size=96&quality=lossless" alt="soootrue" width="40" height="40"></a>
+<a href="https://discord.gg/haha98"><img src="https://cdn.discordapp.com/emojis/765011373590970418.webp?size=96&quality=lossless" alt="soootrue" width="64" height="64"></a>
 </div>
 ^ Thanks to the fellow tech nerds in here for all the suggestions over the evolution of this project (mainly watching me go crazy adding in feature creep)
