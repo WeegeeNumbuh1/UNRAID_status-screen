@@ -1,7 +1,7 @@
 #!/bin/bash
 # Initialization/bootstrap script for our Python Docker.
 # For changelog, check the 'changelog.txt' file.
-# Version = v.3.8
+# Version = v.3.8.1
 # by: WeegeeNumbuh1
 STARTTIME=$(date '+%s')
 BASEDIR=$(dirname $0)
@@ -124,6 +124,11 @@ echo "Setup/Initialization took $((ENDTIME - STARTTIME)) seconds."
 echo -e "${NC}"
 echo -e "${GREEN}>>> Dependencies check complete."
 echo -e "${ORANGE}>>> Entering main loop!${NC}"
+if [ ! -f "${BASEDIR}/main.py" ]; then
+	echo -e "\n${NC}${RED}>>> ERROR: Cannot find ${BASEDIR}/main.py."
+	sleep 2s
+	exit 1
+fi
 echo -ne "${FADE}"
 echo "                                                  ";
 echo "   ██   ██ ███   ██ ██████   █████  ██ ██████     ";
@@ -160,8 +165,6 @@ then
 	# pypy3 /app/main.py & child_pid=$!
 	wait "$child_pid"
 else
-#	echo -e "${ORANGE}>>> Profiling enabled. Profile output will be generated every 60 seconds."
-#	python3 -m scalene --cli --reduced-profile --profile-interval 60 /app/main.py & child_pid=$!
 	echo -e "${ORANGE}>>> ⚠️ Profiling enabled. You MUST run the below command in a new console window!"
 	echo -e "python3 -m scalene --cli --reduced-profile --profile-interval 60 ${BASEDIR}/main.py \n"
 	echo "Note: this can only be run once. This terminal must be restarted to profile again."

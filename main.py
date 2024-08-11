@@ -37,7 +37,7 @@ import time
 START_TIME: float = time.time() # start timing this script
 import datetime
 STARTED_DATE: datetime = datetime.datetime.now()
-VERSION: str = "v.3.8 --- 2024-08-09"
+VERSION: str = "v.3.8.1 --- 2024-08-11"
 import os
 os.environ["PYTHONUNBUFFERED"] = "1"
 print(f"Version: {VERSION}")
@@ -144,7 +144,7 @@ def check_settings() -> None:
     if IMAGE_ROTATION in valid_rotations:
         pass
     else:
-        print_stderr(f"Warning: Current image rotation value ({IMAGE_ROTATION}) is invalid. Value will be reset to \'0\'.")
+        print_stderr(f"Warning: Current image rotation value \'{IMAGE_ROTATION}\' is invalid. Value will be reset to \'0\'.")
         IMAGE_ROTATION = 0
     del valid_rotations
 
@@ -227,8 +227,8 @@ def check_settings() -> None:
     
     # This whole script is structured around 5 entries. If you want to add or remove stuff, have fun 💥
     if len(PLOT_CONFIG) != 5:
-        print_stderr(f"ERROR: There must be 5 entries in the PLOT_CONFIG setting. Only {len(PLOT_CONFIG)} were found.")
-        raise AssertionError("Insufficient entries in configuration.")
+        print_stderr(f"ERROR: There must be 5 entries in the PLOT_CONFIG setting. {len(PLOT_CONFIG)} were found.")
+        raise AssertionError("Incorrect amount of entries in configuration.")
 
 def it_broke(type: int) -> None:
     ''' Our error handler. 1 = thread timeout, any other value is for any unknown error. '''
@@ -316,15 +316,15 @@ def refresh_rate_limiter(setup_time: float) -> None:
     if DEBUG == True:
         plot_settings.set_text(f"Refresh: {REFRESH_RATE}s | Plot: {round(REFRESH_RATE * (HIST_SIZE - 1),1)}s")
 
-def thread_timer(begin_time: float, thread_id: int) -> None:
+def thread_timer(begin_time: float, end_time: float, thread_id: int) -> None:
     ''' Collects how long it takes for the render threads to do their thing. '''
     global current_data
     if thread_id == 0:
-        thread_time[0] = round(time.time() - begin_time, 4)
+        thread_time[0] = round(end_time - begin_time, 4)
         if PROFILE_DISPLAY_RENDER == 0:
             current_data[-1] = thread_time[0]        
     elif thread_id == 1:
-        thread_time[1] = round(time.time() - begin_time, 4)
+        thread_time[1] = round(end_time - begin_time, 4)
         if PROFILE_DISPLAY_RENDER == 1:
             current_data[-1] = thread_time[1]        
     else:
@@ -383,9 +383,9 @@ try:
         PLOT_CONFIG: tuple = settings_loaded['PLOT_CONFIG']
         print("Successfully parsed settings file.")
     except:
-        print_stderr("Warning: Unable to parse settings file completely.\n\
-         To prevent an inconsistent state, the program will now exit.\n\
-         Please check the settings file for any typos.")
+        print_stderr("ERROR: Unable to parse settings file completely.\n\
+       To prevent an inconsistent state, the program will now exit.\n\
+       Please check the settings file for any typos.")
         time.sleep(5)
         raise ValueError("Settings file has invalid or missing entries.")
     finally:
@@ -403,7 +403,7 @@ if DEBUG == True:
     print(f"• We're using: {sys.executable}")
     print(f"• We're running in: {CURRENT_DIR}")
     #print_stderr("• ℹ️ Testing a stderr message on this line.")
-  
+
 # Reduce traceback fluff and automatic garbage collections
 if DEBUG == False:
     sys.tracebacklimit = 0
@@ -424,6 +424,14 @@ try:
     import psutil
 except:
     raise ImportError("Required modules failed to load. Check your Python environment.")
+
+# Get us our core count
+CORE_COUNT = os.cpu_count()
+if CORE_COUNT == None:
+    raise RuntimeError("Cannot determine CPU core count. Program cannot continue.")
+
+# Important; changes some variables if necessary before their first use
+check_settings()
 
 # Check environment just in case we're not started by init.sh
 if "BLINKA_FT232H" in os.environ:
@@ -464,16 +472,8 @@ try:
     bg_image = Image.open(SPLASH_SCREEN).convert('RGB')
 except:
     bg_image = Image.new('RGB', (disp.width, disp.height))    
-    print_stderr(f"Notice: Unable to load splash screen ({SPLASH_SCREEN}). Check your configuration.")
+    print_stderr(f"Notice: Unable to load splash screen \'{SPLASH_SCREEN}\'. Check your configuration.")
 disp.image(bg_image, IMAGE_ROTATION)
-
-# Get us our core count
-CORE_COUNT = os.cpu_count()
-if CORE_COUNT == None:
-    raise RuntimeError("Cannot determine CPU core count. Program cannot continue.")
-
-# Important; changes some variables if necessary before their first use
-check_settings()
 
 # Convert desired plot duration to plot size
 HIST_SIZE = int((PLOT_SIZE * 60) // REFRESH_RATE) + 1
@@ -882,7 +882,7 @@ def update_plot() -> None:
     ''' Draw the plots. This can get really slow; can definitely use blitting (eventually) '''
     canvas = plt.get_current_fig_manager().canvas
     canvas.draw()
-    thread_timer(plot_start, 0)
+    thread_timer(plot_start, time.time(), 0)
 
 def plot_renderer() -> None:
     '''
@@ -896,7 +896,7 @@ def plot_renderer() -> None:
     # option 2 (essentially the same as the above; same performance)
     # image = Image.fromarray(np.asarray(canvas.buffer_rgba()))
     disp.image(image, IMAGE_ROTATION) # this internally calls a numpy calculation
-    thread_timer(render_start, 1)
+    thread_timer(render_start, time.time(), 1)
 
 def plot_profiler(samples: int, sample_size: int):
     '''
@@ -923,9 +923,9 @@ def plot_profiler(samples: int, sample_size: int):
         real_timeout = np.around(((avg_render + (render_sd / 500)) * 2), 4)
         print(f"Profiler stats of {sample_size} samples ({REFRESH_RATE * PROFILER_COUNT}s | \
 actual: {round((time.time() - START_TIME) - init_time, 2)}s):")
-        print(f"   Plot generation:     avg render: {round(avg_render[0] * 1000, 1)}ms \
+        print(f"   Plot generation:     avg: {round(avg_render[0] * 1000, 1)}ms \
 | max/min/SD: {render_max[0]}/{render_min[0]}/{render_sd[0]}ms")
-        print(f"   Screen render:       avg render: {round(avg_render[1] * 1000, 1)}ms \
+        print(f"   Screen render:       avg: {round(avg_render[1] * 1000, 1)}ms \
 | max/min/SD: {render_max[1]}/{render_min[1]}/{render_sd[1]}ms")
         print(f"   Full render average: {render_full}ms ({round((REFERENCE_RENDER_SPEED/render_full) * 100, 1)}% as fast as baseline)")
         del time_array, avg_render, render_sd, render_max, render_min
@@ -995,7 +995,7 @@ Plot range: {round(REFRESH_RATE * (HIST_SIZE - 1),1)}s ({round(REFRESH_RATE * (H
                     print(f"• Updated baseline timeouts: {round(baseline_timeout[0] * 1000, 4)}ms, {round(baseline_timeout[1] * 1000, 4)}ms")
             time.sleep(REFRESH_RATE)
             if dropped_frames > 40: # bail out
-                print_stderr("ERROR: Maximum time outs exceeded.")
+                print_stderr("ERROR: Maximum timeouts exceeded.")
                 it_broke(1)
             continue
 
@@ -1021,7 +1021,7 @@ Plot range: {round(REFRESH_RATE * (HIST_SIZE - 1),1)}s ({round(REFRESH_RATE * (H
                 current_memory_usage = psutil.Process().memory_info().rss
                 this_process_cpu = this_process.cpu_percent(interval=None)
                 print(f"   CPU & memory usage:  {this_process_cpu}% \
-({round(this_process_cpu / CORE_COUNT, 3)}% total CPU) | {bytes2human(current_memory_usage)}")
+({round(this_process_cpu / CORE_COUNT, 3)}% overall CPU) | {bytes2human(current_memory_usage)}")
                 if DEBUG == True:
                     print(f"• Got new baseline timeouts: \
 {round(baseline_timeout[0] * 1000, 4)}ms, {round(baseline_timeout[1] * 1000, 4)}ms (was {timeout_wait[0]}s)")
@@ -1041,7 +1041,7 @@ Plot range: {round(REFRESH_RATE * (HIST_SIZE - 1),1)}s ({round(REFRESH_RATE * (H
             print(f"\nℹ️ Periodic stat update @ {samples} samples \
 ({timedelta_clean(time.time()-START_TIME)}):\n├ {dropped_frames} dropped sample(s) | \
 {sample_actual_time}ms avg time/sample\
-\n└ Avg CPU: {this_process_cpu}% ({round(this_process_cpu / CORE_COUNT, 3)}% total) | \
+\n└ Avg CPU: {this_process_cpu}% ({round(this_process_cpu / CORE_COUNT, 3)}% overall) | \
 Current memory use: {bytes2human(current_memory_usage)}")
 
 # finally enter main loop

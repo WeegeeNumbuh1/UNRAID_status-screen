@@ -1,7 +1,7 @@
 #!/bin/bash
 # Initialization/bootstrap script for our Python Docker.
 # For changelog, check the 'changelog.txt' file.
-# Version = v.3.8
+# Version = v.3.8.1
 # by: WeegeeNumbuh1
 STARTTIME=$(date '+%s')
 BASEDIR=$(dirname $0)
@@ -125,6 +125,11 @@ echo "Setup/Initialization took $((ENDTIME - STARTTIME)) second(s)."
 echo -e "${NC}"
 echo -e "${GREEN}>>> Dependencies check complete."
 echo -e "${ORANGE}>>> Entering main loop!${NC}"
+if [ ! -f "${BASEDIR}/main.py" ]; then
+	echo -e "\n${NC}${RED}>>> ERROR: Cannot find ${BASEDIR}/main.py."
+	sleep 2s
+	exit 1
+fi
 echo -e "${FADE}"
 echo "                                                  ";
 echo "   ██   ██ ███   ██ ██████   █████  ██ ██████     ";
