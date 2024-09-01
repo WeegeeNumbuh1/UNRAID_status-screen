@@ -15,7 +15,7 @@ Network type should be set to 'host' for network statistics.</Overview>
   <Category/>
   <WebUI/>
   <TemplateURL/>
-  <Icon>https://d1q6f0aelx0por.cloudfront.net/product-logos/library-python-logo.png</Icon>
+  <Icon>https://raw.githubusercontent.com/WeegeeNumbuh1/UNRAID_status-screen/90cf79e8e3e189348e6b09ad1bc5e32946ee3e61/Reference%20Images/Logo.png</Icon>
   <ExtraParams>--init --memory=256m --cpu-shares=256 --device-cgroup-rule='c 189:* rmw'</ExtraParams>
   <PostArgs>nice -n 10 /bin/bash /app/init.sh</PostArgs>
   <CPUset/>
