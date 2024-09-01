@@ -15,7 +15,7 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 FADE='\033[2m'
 CHECK_FILE=${VENVPATH}/first_run_complete
-PROFILING_FLAG=/app/profile
+PROFILING_FLAG=${BASEDIR}/profile
 INTERNET_STAT=0 # think return codes
 
 # Define function to send SIGTERM to python when SIGINT is detected

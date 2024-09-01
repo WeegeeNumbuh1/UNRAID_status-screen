@@ -14,7 +14,7 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 FADE='\033[2m'
 CHECK_FILE=/home/first_run_complete # flag to check if we've run the setup before
-PROFILING_FLAG=/app/profile # put a file named 'profile' in the same directory as this script to run profiling
+PROFILING_FLAG=${BASEDIR}/profile # put a file named 'profile' in the same directory as this script to run profiling
 INTERNET_STAT=0 # 0 = there is internet, 1 = no internet (bad)
 SKIP_CHECK=0 # 0 = do not skip dependency checks, 1 = skip
 
