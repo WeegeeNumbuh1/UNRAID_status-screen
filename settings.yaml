@@ -35,10 +35,14 @@ NETWORK_INTERFACE: bond0
 # Unraid has multiple interfaces that show duplicate data.
 # Additionally, if this is set correctly, this script can determine if the interface ever goes down.
 # Use the interface names listed in the Unraid Web UI or from the output of the script.
+# If you're using this script outside of Unraid, setting this to "all" will have the script
+# monitor all network interfaces.
 
-SPLASH_SCREEN: /app/background.bmp
-# Our splash screen when loading or exiting this script.
-# Optional. However, the script will complain if there's no splash screen.
+SPLASH_SCREEN: default
+# An absolute path to the splash screen when loading or exiting this script.
+# If this is set to "default" then the script will assume a "background.bmp" image will be in the same
+# working directory.
+# If this is set to "none" then the script will have a black screen as the splash screen.
 
 IMAGE_ROTATION: 180
 # Rotate the screen if needed. Valid values are 0, 90, 180, 270

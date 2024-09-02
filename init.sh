@@ -1,7 +1,7 @@
 #!/bin/bash
 # Initialization/bootstrap script for our Python Docker.
 # For changelog, check the 'changelog.txt' file.
-# Version = v.3.8.1
+# Version = v.3.8.2
 # by: WeegeeNumbuh1
 STARTTIME=$(date '+%s')
 BASEDIR=$(dirname $0)

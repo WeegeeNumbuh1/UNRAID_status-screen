@@ -1,5 +1,10 @@
 Changelog:
 - v.3.8 (2024-08-09)
+	- v.3.8.2 (2024-09-01)
+		- NEW: splash screen no longer needs an absolute path and script defaults to looking in working directory
+		- network setting now has new option for monitoring all interfaces (aimed at non UNRAID users)
+		- add in logic changes for main script and comments in settings file
+		- numerous init-portable.sh fixes
     - v.3.8.1
         - Adjusted thread timing calculations
         - Rearranged when settings check occurs during initialization

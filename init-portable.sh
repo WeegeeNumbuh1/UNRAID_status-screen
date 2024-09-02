@@ -1,7 +1,7 @@
 #!/bin/bash
-# Initialization/bootstrap script for our Python Docker.
+# Initialization/bootstrap script for our monitoring script.
 # For changelog, check the 'changelog.txt' file.
-# Version = v.3.8.1
+# Version = v.3.8.2
 # by: WeegeeNumbuh1
 STARTTIME=$(date '+%s')
 BASEDIR=$(dirname $0)
@@ -60,14 +60,18 @@ fi
 
 if [ ! -f "$CHECK_FILE" ];
 then 
+    echo ">> Updating package lists..."
 	apt-get update >/dev/null
 	dpkg --configure -a >/dev/null
+    echo ">> Installing needed dependencies..."
 	apt-get install -y libusb-1.0-0 >/dev/null
 	apt-get install -y locales >/dev/null
 	apt-get install -y libopenblas0 >/dev/null
+    apt-get install -y python3-dev >/dev/null
 	apt-get install -y python3-venv >/dev/null
 	sed -i 's/^# *\(en_US.UTF-8\)/\1/' /etc/locale.gen
-	locale-gen
+    echo ">> Generating locales..."
+	locale-gen >/dev/null
 	echo "export LC_ALL=en_US.UTF-8" >> ~/.bashrc
 	echo "export LANG=en_US.UTF-8" >> ~/.bashrc
 	echo "export LANGUAGE=en_US.UTF-8" >> ~/.bashrc
@@ -77,7 +81,7 @@ fi
 if [ ! -d "$VENVPATH" ];
 then
     mkdir ${VENVPATH}
-    echo "> Making virtual environment..."
+    echo ">> Making virtual environment..."
 	#pip3 install --upgrade --user virtualenv >/dev/null
 	#virtualenv ${VENVPATH} >/dev/null
 	python3 -m venv ${VENVPATH}
@@ -85,9 +89,7 @@ fi
 echo "> System image ready."
 echo -n "> We have: "
 ${VENVPATH}/bin/python3 -VV
-# Unraid's Docker log does not show lines until it encounters a newline so we do the below:
 CHECKMARK='\e[1F\e[30C✅\n' # move cursor up to the beginning one line up then move 30 spaces right
-# If you use Dozzle, the above will show up as "FC✅", RIP
 # install dependencies
 if [ ! -f "$CHECK_FILE" ];
 then 
@@ -108,14 +110,14 @@ then
 	echo -e "${CHECKMARK}${VERB_TEXT}psutil"
 	${VENVPATH}/bin/pip3 install --upgrade psutil >/dev/null
 	echo -e "${CHECKMARK}${VERB_TEXT}pyyaml"
-	pip3 install --upgrade pyyaml >/dev/null
+	${VENVPATH}/bin/pip3 install --upgrade pyyaml >/dev/null
 	if [ -f "$PROFILING_FLAG" ];
 	then
 		echo -e "${CHECKMARK}ℹ️ Profiling flag detected\n -> ${VERB_TEXT}scalene"
 		pip install --upgrade scalene >/dev/null
 	fi
+    echo -e "${CHECKMARK}░░░▒▒▓▓ Completed ▓▓▒▒░░░\n"  
 fi
-echo -e "${CHECKMARK}░░░▒▒▓▓ Completed ▓▓▒▒░░░\n"
 #echo "> List of installed Python packages:"
 #pip list # for debug
 touch $CHECK_FILE
@@ -156,7 +158,7 @@ echo " ▒▒▓▒ ▒ ░ ▒▓ ░▒▓░░▓  ▒▓▒░ ░░▒▒
 echo "░▒▓▓▓▓▓ ░▓▓▓ ▒▓▓▒░▓▓░▒▓███  by: WeegeeNumbuh1  ███";
 
 echo ""
-echo -e "${NC}${RED}>>> Use Ctrl+C to quit.${FADE}"
+echo -e "${NC}${RED}>>> Use Ctrl+C to quit.${NC}${FADE}"
 # fire up the script and watch over it
 trap terminate SIGINT
 if [ ! -f "$PROFILING_FLAG" ];
@@ -166,10 +168,10 @@ then
 	wait "$child_pid"
 else
 	echo -e "${ORANGE}>>> ⚠️ Profiling enabled. You MUST run the below command in a new console window!"
-	echo -e "python3 -m scalene --cli --reduced-profile --profile-interval 60 ${BASEDIR}/main.py \n"
+	echo -e "${VENVPATH}/bin/python3 -m scalene --cli --reduced-profile --profile-interval 60 ${BASEDIR}/main.py \n"
 	echo "Note: this can only be run once. This terminal must be restarted to profile again."
 	echo "--- To disable profiling on the next run, rename or delete the \"profile\" file."
-	python3 -c "exec(\"import time\nwhile True: time.sleep(1)\")" & child_pid=$! # to keep the docker alive
+	python3 -c "exec(\"import time\nwhile True: time.sleep(1)\")" & child_pid=$! # to keep the session alive
 	wait "$child_pid"
 fi
 # the following will only run if the python script exits with an error

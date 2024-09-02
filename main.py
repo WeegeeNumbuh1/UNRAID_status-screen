@@ -37,7 +37,7 @@ import time
 START_TIME: float = time.time() # start timing this script
 import datetime
 STARTED_DATE: datetime = datetime.datetime.now()
-VERSION: str = "v.3.8.1 --- 2024-08-11"
+VERSION: str = "v.3.8.2 --- 2024-09-01"
 import os
 os.environ["PYTHONUNBUFFERED"] = "1"
 print(f"Version: {VERSION}")
@@ -59,10 +59,10 @@ DEBUG: bool = True
 REFRESH_RATE: float = 3
 PLOT_SIZE: float = 5
 ARRAY_PATH: str = "/rootfs/mnt/user0"
-CPU_TEMP_SENSOR: str = "k10temp"
+CPU_TEMP_SENSOR: str = ""
 NETWORK_INTERFACE: str = "bond0"
-SPLASH_SCREEN: str = "/app/background.bmp"
-IMAGE_ROTATION: int = 180
+SPLASH_SCREEN: str = f"{CURRENT_DIR}/background.bmp"
+IMAGE_ROTATION: int = 0
 PLOT_CONFIG: tuple = (
     # --- PLOT 1
     {
@@ -196,19 +196,23 @@ def check_settings() -> None:
     except:
         print_stderr(f"Warning: Array path \'{ARRAY_PATH}\' does not exist. Defaulting to '/'.")
         array_valid = False
-    try:
-        test3 = psutil.net_io_counters(pernic=True)[NETWORK_INTERFACE]
-        del test3
-    except:
-        print_stderr(f"Warning: Network interface \'{NETWORK_INTERFACE}\' not found. Network readouts may be incorrect.")
-        nic_stats = psutil.net_io_counters(pernic=True)
-        nic_names = list(nic_stats.keys())
-        print("Notice:  For your reference, the following network interfaces were found:")
-        for name in nic_names:
-            print(f"{name}   ", end='')
-        print()
-        del nic_stats, nic_names
+
+    if NETWORK_INTERFACE == "all":
         network_interface_set = False
+    else:
+        try:
+            test3 = psutil.net_io_counters(pernic=True)[NETWORK_INTERFACE]
+            del test3
+        except:
+            print_stderr(f"Warning: Network interface \'{NETWORK_INTERFACE}\' not found. Network readouts may be incorrect.")
+            nic_stats = psutil.net_io_counters(pernic=True)
+            nic_names = list(nic_stats.keys())
+            print("Notice:  For your reference, the following network interfaces were found:")
+            for name in nic_names:
+                print(f"{name}   ", end='')
+            print()
+            del nic_stats, nic_names
+            network_interface_set = False
 
     print("Settings verification complete.")
     if DEBUG == True:
@@ -377,10 +381,15 @@ try:
         ARRAY_PATH: str = settings_loaded['ARRAY_PATH']
         CPU_TEMP_SENSOR: str = settings_loaded['CPU_TEMP_SENSOR']
         NETWORK_INTERFACE: str = settings_loaded['NETWORK_INTERFACE']
-        SPLASH_SCREEN: str = settings_loaded['SPLASH_SCREEN']
+        splash_screen_tmp: str = settings_loaded['SPLASH_SCREEN']
         IMAGE_ROTATION: int = settings_loaded['IMAGE_ROTATION']
         BARPLOT_COLORS: list = settings_loaded['BARPLOT_COLORS']
         PLOT_CONFIG: tuple = settings_loaded['PLOT_CONFIG']
+        if splash_screen_tmp == "default":
+            SPLASH_SCREEN = f"{CURRENT_DIR}/background.bmp"
+        else:
+            SPLASH_SCREEN = splash_screen_tmp
+        del splash_screen_tmp
         print("Successfully parsed settings file.")
     except:
         print_stderr("ERROR: Unable to parse settings file completely.\n\
@@ -468,11 +477,14 @@ if DEBUG == True:
     print(f"• Display size: {disp.width}x{disp.height}")
 
 # Have a splash screen while loading
-try:
-    bg_image = Image.open(SPLASH_SCREEN).convert('RGB')
-except:
-    bg_image = Image.new('RGB', (disp.width, disp.height))    
-    print_stderr(f"Notice: Unable to load splash screen \'{SPLASH_SCREEN}\'. Check your configuration.")
+if SPLASH_SCREEN == "none":
+    bg_image = Image.new('RGB', (disp.width, disp.height))
+else:
+    try:
+        bg_image = Image.open(SPLASH_SCREEN).convert('RGB')
+    except:
+        bg_image = Image.new('RGB', (disp.width, disp.height))    
+        print_stderr(f"Notice: Unable to load splash screen \'{SPLASH_SCREEN}\'. Check your configuration.")
 disp.image(bg_image, IMAGE_ROTATION)
 
 # Convert desired plot duration to plot size
