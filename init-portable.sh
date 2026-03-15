@@ -4,7 +4,7 @@
 # If you're using this with a Python Docker,
 # use the main init script, not this one.
 # For changelog, check the 'changelog.txt' file.
-# Version = v.3.11.3
+# Version = v.3.11.4
 # by: WeegeeNumbuh1
 STARTTIME=$(date '+%s')
 BASEDIR=$(dirname $0)

@@ -5,7 +5,7 @@
 # If you plan to use this script outside of this use case,
 # please use the init-portable script instead.
 # For changelog, check the 'changelog.txt' file.
-# Version = v.3.11.3
+# Version = v.3.11.4
 # by: WeegeeNumbuh1
 STARTTIME=$(date '+%s')
 BASEDIR=$(dirname $0)
@@ -109,9 +109,9 @@ if [ $SKIP_CHECK -eq 0 ]; then
 		echo -e "${CHECKMARK}${VERB_TEXT}pyftdi"
 		pip3 install --upgrade pyftdi >/dev/null
 		echo -e "${CHECKMARK}${VERB_TEXT}adafruit-blinka"
-		pip3 install --upgrade adafruit-blinka >/dev/null
+		pip3 install adafruit-blinka >/dev/null
 		echo -e "${CHECKMARK}${VERB_TEXT}circuitpython"
-		pip3 install --upgrade adafruit-circuitpython-rgb-display >/dev/null
+		pip3 install adafruit-circuitpython-rgb-display >/dev/null
 		echo -e "${CHECKMARK}${VERB_TEXT}matplotlib"
 		pip3 install --upgrade matplotlib >/dev/null
 		pip3 install --upgrade matplotx >/dev/null

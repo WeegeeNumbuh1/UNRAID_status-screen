@@ -1,5 +1,10 @@
 UNRAID Status Screen Changelog:
 
+- v.3.11.4 (2026-03-15)
+    - Minor code refactoring
+    - Initialization script no longer upgrades to latest version of Adafruit's
+      display modules when the dependency check is run
+
 - v.3.11.3 (2025-12-15)
     - Update copyright year and some references
     - Minor repo cleanups

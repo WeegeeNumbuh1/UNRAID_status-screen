@@ -53,7 +53,7 @@ import time
 START_TIME: float = time.monotonic() # start timing this script
 import datetime
 STARTED_DATE: datetime = datetime.datetime.now()
-VERSION: str = "v.3.11.3 --- 2025-12-15"
+VERSION: str = "v.3.11.4 --- 2026-03-15"
 import os
 os.environ["PYTHONUNBUFFERED"] = "1"
 from pathlib import Path
@@ -915,50 +915,49 @@ def update_plot() -> None:
     memory_str = f"{memory_used} / {memory_total} ({memory_use.percent}%)"
 
     # update lines with latest data
-    with threading.Lock(): # lock variables just in case
-        for plot, lines in enumerate(plot_lines):
-            if plot == 1 or plot == 4: # don't plot over our non-graph subplots
-                continue
-            for index, line in enumerate(lines):
-                line.set_ydata(y_data[plot][index])
-            # autoscale if not specified
-            if 'ylim' not in PLOT_CONFIG[plot].keys():
-                ax[plot].relim() # recompute data limits
-                ax[plot].autoscale(enable=True, axis='y') # reenable
-                ax[plot].set_ylim(bottom=0) # this leaves y max untouched and sets autoscale off
-                ax[plot].autoscale_view(scalex=False) # scale the plot
+    for plot, lines in enumerate(plot_lines):
+        if plot == 1 or plot == 4: # don't plot over our non-graph subplots
+            continue
+        for index, line in enumerate(lines):
+            line.set_ydata(y_data[plot][index])
+        # autoscale if not specified
+        if 'ylim' not in PLOT_CONFIG[plot].keys():
+            ax[plot].relim() # recompute data limits
+            ax[plot].autoscale(enable=True, axis='y') # reenable
+            ax[plot].set_ylim(bottom=0) # this leaves y max untouched and sets autoscale off
+            ax[plot].autoscale_view(scalex=False) # scale the plot
 
-        # update our heatmap
-        heatmap.set_data(np.matrix(cpu_percs_cores))
-        # update our barplot
-        barplot[0].set_width(array_use.percent)
-        barplot[1].set_width(memory_use.percent)
-        """ original setup; this WILL cause a memory leak """
-        # ax[1].pcolormesh([cpu_percs_cores], cmap='hot', vmin=0, vmax=100)
-        # ax[4].barh(1, array_use.percent, facecolor='#375e1f')
-        # ax[4].barh(2, memory_use.percent, facecolor='#4a2a7a')
+    # update our heatmap
+    heatmap.set_data(np.matrix(cpu_percs_cores))
+    # update our barplot
+    barplot[0].set_width(array_use.percent)
+    barplot[1].set_width(memory_use.percent)
+    """ original setup; this WILL cause a memory leak """
+    # ax[1].pcolormesh([cpu_percs_cores], cmap='hot', vmin=0, vmax=100)
+    # ax[4].barh(1, array_use.percent, facecolor='#375e1f')
+    # ax[4].barh(2, memory_use.percent, facecolor='#4a2a7a')
 
-        # update text in plots with last polled data
-        if current_data[1] is None:
-            cpu_text.set_text(current_data[0])
+    # update text in plots with last polled data
+    if current_data[1] is None:
+        cpu_text.set_text(current_data[0])
+    else:
+        cpu_text.set_text(f"{current_data[0]} | {current_data[1]}")
+    disk_text.set_text(f"{current_data[2]} | {current_data[3]}")
+    storage_text.set_text(array_str)
+    memory_text.set_text(memory_str)
+    network_text.set_text(f"{current_data[4]} | {current_data[5]}")
+    uptime_text.set_text(uptime)
+    host_text.set_text(f"{UNRAID_HOSTNAME} {UNRAID_IP}")
+    if DEBUG:
+        if not current_data[-1]:
+            debug_text.set_text("Last render: 0ms")
         else:
-            cpu_text.set_text(f"{current_data[0]} | {current_data[1]}")
-        disk_text.set_text(f"{current_data[2]} | {current_data[3]}")
-        storage_text.set_text(array_str)
-        memory_text.set_text(memory_str)
-        network_text.set_text(f"{current_data[4]} | {current_data[5]}")
-        uptime_text.set_text(uptime)
-        host_text.set_text(f"{UNRAID_HOSTNAME} {UNRAID_IP}")
-        if DEBUG:
-            if not current_data[-1]:
-                debug_text.set_text("Last render: 0ms")
+            if PROFILE_DISPLAY_RENDER == 0:
+                debug_text.set_text(f"Last plot gen: {(current_data[-1] * 1000):.1f}ms")
             else:
-                if PROFILE_DISPLAY_RENDER == 0:
-                    debug_text.set_text(f"Last plot gen: {(current_data[-1] * 1000):.1f}ms")
-                else:
-                    debug_text.set_text(f"Last render: {(current_data[-1] * 1000):.1f}ms")
-            frame_number_text.set_text(f"{samples},{dropped_frames} | "
-                                       f"{timedelta_clean(time.monotonic()-START_TIME)}")
+                debug_text.set_text(f"Last render: {(current_data[-1] * 1000):.1f}ms")
+        frame_number_text.set_text(f"{samples},{dropped_frames} | "
+                                    f"{timedelta_clean(time.monotonic()-START_TIME)}")
 
     """ Draw the plots. """
     canvas = plt.get_current_fig_manager().canvas
